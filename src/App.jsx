@@ -11,6 +11,9 @@ import MyEvents from './pages/MyEvents';
 import AdminDashboard from './pages/AdminDashboard';
 import NotFound from './pages/NotFound';
 import PrivateRoute from './components/PrivateRoute';
+import ForgotPassword from './pages/ForgetPassword';
+import ResetPassword from './pages/ResetPassword';
+
 
 function App() {
   return (
@@ -22,6 +25,8 @@ function App() {
             <Route path="/" element={<Home />} />
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/events/:id" element={<EventDetails />} />
             <Route path="/create-event" element={
               <PrivateRoute requiredRole="ORGANIZER">

@@ -113,17 +113,13 @@ function Login() {
                 <p className="mt-1 text-sm text-red-600">{errors.password.message}</p>
               )}
             </div>
-            <div className='flex justify-end'>
-              <p>Forget Password?</p>
-            </div>
-            {/* <div>
-              <Link
-                to="/signup"
-                className="font-medium text-blue-600 hover:text-blue-500 transition-colors"
-              >
-                Forget Password?
-              </Link>
-            </div> */}
+          
+           <div className="flex justify-end">
+  <Link to="/forgot-password" className="text-sm text-blue-600 hover:underline">
+    Forgot Password?
+  </Link>
+    </div>
+
 
             {/* Submit Button */}
             <motion.button
