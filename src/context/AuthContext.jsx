@@ -64,19 +64,30 @@ export function AuthProvider({ children }) {
 
   const login = async (credentials) => {
     const response = await axios.post('http://localhost:8081/api/auth/login', credentials);
-    const { token, role, email } = response.data;
-
+    const { token } = response.data;
+  
+    const decoded = decodeToken(token);
     localStorage.setItem('token', token);
     dispatch({
       type: 'LOGIN_SUCCESS',
       payload: {
-        user: { role, email },
+        user: {
+          id: decoded.id,
+          email: decoded.email,
+          // 👇 Normalize backend role here
+          role: decoded.role.replace('ROLE_', '') // ✅ this is correct
+        },
         token
       }
     });
+  
+    // ❌ Missing this return (it's important!)
     return response.data;
   };
-
+  ;
+    
+  
+  
   const signup = async (userData) => {
     await axios.post('http://localhost:8081/api/auth/signup', userData);
     return login({ email: userData.email, password: userData.password });

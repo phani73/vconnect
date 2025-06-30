@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect} from 'react';
 import { motion } from 'framer-motion';
 import { Search, Filter, MapPin, Calendar, Users, Zap } from 'lucide-react';
 import { toast } from 'react-hot-toast';
@@ -6,6 +6,8 @@ import MapComponent from '../components/MapComponent';
 import EventCard from '../components/EventCard';
 import { eventService } from '../services/eventService';
 import { useAuth } from '../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
+
 
 function Home() {
   const [events, setEvents] = useState([]);
@@ -16,7 +18,7 @@ function Home() {
   const [selectedCategory, setSelectedCategory] = useState('ALL');
   const [userLocation, setUserLocation] = useState(null);
   const { isAuthenticated } = useAuth();
-
+  const navigate = useNavigate();
   useEffect(() => {
     loadEvents();
   }, []);
@@ -29,13 +31,21 @@ function Home() {
     try {
       setLoading(true);
       const data = await eventService.getAllEvents();
-      setEvents(data);
+  
+      // ✅ Ensure it's an array
+      const eventList = Array.isArray(data)
+        ? data
+        : data.created || data.events || []; // adjust according to what your backend returns
+  
+      setEvents(eventList);
     } catch (error) {
       toast.error('Failed to load events');
+      setEvents([]); // fallback
     } finally {
       setLoading(false);
     }
   };
+  
 
   const filterEvents = () => {
     let filtered = events;
@@ -58,9 +68,10 @@ function Home() {
   const handleJoinEvent = async (eventId) => {
     if (!isAuthenticated) {
       toast.error('Please sign in to join events');
+      navigate('/login'); 
       return;
     }
-
+  
     try {
       await eventService.joinEvent(eventId);
       toast.success('Successfully joined the event!');
@@ -69,6 +80,7 @@ function Home() {
       toast.error('Failed to join event');
     }
   };
+  
 
   const handleEventClick = (event) => {
     // This could open an event details modal or navigate
@@ -200,13 +212,15 @@ function Home() {
             </div>
           )}
 
-          {filteredEvents.length === 0 && (
-            <div className="text-center py-12">
-              <MapPin className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-              <h3 className="text-xl font-medium text-gray-600 mb-2">No events found</h3>
-              <p className="text-gray-500">Try adjusting your search or filters</p>
-            </div>
-          )}
+{Array.isArray(filteredEvents) && filteredEvents.length === 0 && (
+  <div className="text-center py-12">
+    <MapPin className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+    <h3 className="text-xl font-medium text-gray-600 mb-2">No events found</h3>
+    <p className="text-gray-500">Try adjusting your search or filters</p>
+  </div>
+)}
+
+
         </div>
       </section>
     </div>

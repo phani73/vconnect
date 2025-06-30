@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
+import { toast } from 'react-hot-toast';
 import { MapPin, Menu, X, Plus, Calendar, Settings, LogOut, User } from 'lucide-react';
 
 function Navbar() {
@@ -11,10 +12,22 @@ function Navbar() {
   const location = useLocation();
   const navigate = useNavigate();
 
+  const isOrganizer = user?.role === 'ORGANIZER' || user?.role === 'ADMIN';
+
   const handleLogout = () => {
     logout();
     navigate('/');
     setShowUserMenu(false);
+  };
+
+  const handleCreateClick = (e) => {
+    if (!isOrganizer) {
+      e.preventDefault();
+      toast.error('Only organizers can create events');
+    } else {
+      navigate('/create-event');
+    }
+    setIsOpen(false); // Close mobile menu if open
   };
 
   const isActive = (path) => location.pathname === path;
@@ -49,11 +62,12 @@ function Navbar() {
               <>
                 <Link
                   to="/create-event"
+                  onClick={handleCreateClick}
                   className={`px-4 py-2 rounded-lg transition-all flex items-center space-x-1 ${
                     isActive('/create-event') 
                       ? 'font-medium text-emerald-600 bg-emerald-50' 
                       : 'text-gray-600 hover:text-emerald-600 hover:bg-emerald-50'
-                  }`}
+                  } ${!isOrganizer ? 'cursor-not-allowed opacity-60' : ''}`}
                 >
                   <Plus className="w-4 h-4" />
                   <span>Create</span>
@@ -168,17 +182,20 @@ function Navbar() {
               >
                 Discover Events
               </Link>
-              {isAuthenticated ? (
+              {isAuthenticated && (
                 <>
                   <Link
                     to="/create-event"
+                    onClick={handleCreateClick}
                     className={`block px-4 py-3 rounded-lg transition-all ${
-                      isActive('/create-event') ? 'font-medium text-emerald-600 bg-emerald-50' : 'text-gray-600'
-                    }`}
-                    onClick={() => setIsOpen(false)}
+                      isActive('/create-event') 
+                        ? 'font-medium text-emerald-600 bg-emerald-50' 
+                        : 'text-gray-600'
+                    } ${!isOrganizer ? 'cursor-not-allowed opacity-60' : ''}`}
                   >
                     Create Event
                   </Link>
+
                   <Link
                     to="/my-events"
                     className={`block px-4 py-3 rounded-lg transition-all ${
@@ -206,7 +223,8 @@ function Navbar() {
                     Sign Out
                   </button>
                 </>
-              ) : (
+              )}
+              {!isAuthenticated && (
                 <div className="space-y-2 pt-2 border-t border-gray-200">
                   <Link
                     to="/login"
