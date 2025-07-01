@@ -45,11 +45,16 @@ export function AuthProvider({ children }) {
       try {
         const decoded = decodeToken(token);
         if (decoded && decoded.exp * 1000 > Date.now()) {
+          // 🔥 Normalize role again after refresh
           dispatch({
             type: 'LOGIN_SUCCESS',
             payload: {
-              user: decoded,
-              token: token
+              user: {
+                id: decoded.id,
+                email: decoded.email,
+                role: decoded.role.replace('ROLE_', '') // ✅ This is needed
+              },
+              token
             }
           });
         } else {
@@ -61,6 +66,7 @@ export function AuthProvider({ children }) {
     }
     dispatch({ type: 'SET_LOADING', payload: false });
   }, []);
+  
 
   const login = async (credentials) => {
     const response = await axios.post('http://localhost:8081/api/auth/login', credentials);

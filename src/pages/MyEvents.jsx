@@ -14,27 +14,17 @@ function MyEvents() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('registered');
-  const [events, setEvents] = useState({ registered: [], created: [] });
+  const [events, setEvents] = useState({ created: [], registered: [] });
   const [loading, setLoading] = useState(true);
 
-
-  // useEffect(() => {
-  //   if (user?.id) loadUserEvents();
-  // }, [user]);
-  
-  useEffect(() => {
-    console.log('Component mounted. Loading user events...');
-    loadUserEvents();
-  }, []);
 
   const loadUserEvents = async () => {
     try {
       setLoading(true);
-      const data = await eventService.getUserEvents(user.id);
-      // Set fallback to empty array if registered is undefined
+      const res = await eventService.getUserEvents(user.id);
       setEvents({
-        registered: data.registered || [],
-        created: data.created || [],
+        created: res?.created || [],
+        registered: res?.registered || [],
       });
     } catch (error) {
       console.error('Failed to load events:', error);
@@ -43,6 +33,42 @@ function MyEvents() {
       setLoading(false);
     }
   };
+  
+  useEffect(() => {
+    if (user?.id) {
+      loadUserEvents();
+    }
+  }, [user]);
+  
+  
+
+  // const loadUserEvents = async () => {
+  //   try {
+  //     setLoading(true);
+  
+  //     const data = await eventService.getUserEvents(user.id);
+  //     setCreatedEvents(res.created);      // events created by user (organizer)
+  //     setRegisteredEvents(res.registered); /
+  //     setEvents({
+  //       created: data?.created || [],
+  //       registered: data?.registered || [],
+  //     });
+  
+  //     console.log("Loaded events:", data);
+  //     console.log("Parsed events:", {
+  //       created: data?.created || [],
+  //       registered: data?.registered || [],
+  //     });
+  
+  //   } catch (error) {
+  //     console.error('Failed to load events:', error);
+  //     toast.error('Failed to load your events');
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
+  
+
 
 
   const handleLeaveEvent = async (eventId) => {
@@ -82,23 +108,7 @@ function MyEvents() {
     }
   };
 
-  getUserEvents: async (userId) => {
-    try {
-      const token = localStorage.getItem("token");
-      const res = await axios.get(
-        `http://localhost:8081/api/events/user/${userId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-      return res.data;
-    } catch (err) {
-      console.error("🔴 getUserEvents error:", err.response?.data || err.message);
-      throw err;
-    }
-  }
+  
   
   const getCategoryBadgeColor = (category) => {
     switch (category) {
@@ -111,25 +121,24 @@ function MyEvents() {
     }
   };
 
-  const EventCard = ({ event, isCreated = false }) => {
-    console.log('Rendering event:', event);
-    return (
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100 overflow-hidden"
-      >
-        <div className="relative h-48">
-          <img
-            src={event.imageUrl || 'https://images.pexels.com/photos/1157255/pexels-photo-1157255.jpeg?auto=compress&cs=tinysrgb&w=600'}
-            alt={event.title}
-            className="w-full h-full object-cover"
-          />
-          <div className={`absolute top-4 left-4 px-3 py-1 rounded-full text-xs font-medium ${getCategoryBadgeColor(event.category)}`}>
-            {event.category}
-          </div>
-          <div className={`absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t ${getCategoryColor(event.category)} opacity-80`} />
+  const EventCard = ({ event, isCreated = false }) => (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100 overflow-hidden"
+    >
+      {/* Event Image */}
+      <div className="relative h-48">
+        <img
+          src={event.imageUrl || 'https://images.pexels.com/photos/1157255/pexels-photo-1157255.jpeg?auto=compress&cs=tinysrgb&w=600'}
+          alt={event.title}
+          className="w-full h-full object-cover"
+        />
+        <div className={`absolute top-4 left-4 px-3 py-1 rounded-full text-xs font-medium ${getCategoryBadgeColor(event.category)}`}>
+          {event.category}
         </div>
+        <div className={`absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t ${getCategoryColor(event.category)} opacity-80`} />
+      </div>
 
         <div className="p-6">
           <h3 className="text-xl font-bold text-gray-900 mb-2 line-clamp-2">{event.title}</h3>
@@ -154,53 +163,47 @@ function MyEvents() {
             </div>
           </div>
 
-          <div className="flex items-center justify-between">
-            <button
-              onClick={() => {
-                console.log('Navigating to event detail:', event.id);
-                navigate(`/events/${event.id}`);
-              }}
-              className="flex items-center space-x-1 text-blue-600 hover:text-blue-700 transition-colors"
-            >
-              <Eye className="w-4 h-4" />
-              <span className="text-sm font-medium">View Details</span>
-            </button>
+        {/* Action Buttons */}
+        <div className="flex items-center justify-between">
+          <button
+            onClick={() => navigate(`/events/${event.id}`)}
+            className="flex items-center space-x-1 text-blue-600 hover:text-blue-700 transition-colors"
+          >
+            <Eye className="w-4 h-4" />
+            <span className="text-sm font-medium">View Details</span>
+          </button>
 
-            <div className="flex items-center space-x-2">
-              {isCreated ? (
-                <>
-                  <button
-                    onClick={() => {
-                      console.log('Navigating to edit event:', event.id);
-                      navigate(`/events/${event.id}/edit`);
-                    }}
-                    className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                    title="Edit Event"
-                  >
-                    <Edit3 className="w-4 h-4" />
-                  </button>
-                  <button
-                    onClick={() => handleDeleteEvent(event.id)}
-                    className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                    title="Delete Event"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </>
-              ) : (
+          <div className="flex items-center space-x-2">
+            {isCreated ? (
+              <>
                 <button
-                  onClick={() => handleLeaveEvent(event.id)}
-                  className="px-3 py-1 text-sm text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition-colors"
+                  onClick={() => navigate(`/events/${event.id}/edit`)}
+                  className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                  title="Edit Event"
                 >
-                  Leave Event
+                  <Edit3 className="w-4 h-4" />
                 </button>
-              )}
-            </div>
+                <button
+                  onClick={() => handleDeleteEvent(event.id)}
+                  className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                  title="Delete Event"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </>
+            ) : (
+              <button
+                onClick={() => handleLeaveEvent(event.id)}
+                className="px-3 py-1 text-sm text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition-colors"
+              >
+                Leave Event
+              </button>
+            )}
           </div>
         </div>
-      </motion.div>
-    );
-  };
+      </div>
+    </motion.div>
+  );
 
   if (loading) {
     return (
@@ -253,9 +256,10 @@ function MyEvents() {
             }`}
           >
             <div className="flex items-center justify-center space-x-2">
-              <Heart className="w-4 h-4" />
-              <span>Registered ({events.registered.length})</span>
-            </div>
+          <Heart className="w-4 h-4" />
+        <span>Registered ({events?.registered?.length || 0})</span>
+        </div>
+
           </button>
           <button
             onClick={() => {
@@ -274,18 +278,11 @@ function MyEvents() {
         </div>
 
         {activeTab === 'registered' && (
-          <div>
+          <div key="registered-tab">
             {events.registered.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {events.registered.map((event, index) => (
-                  <motion.div
-                    key={event.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.1 }}
-                  >
-                    <EventCard event={event} isCreated={false} />
-                  </motion.div>
+                {events.registered.map((event) => (
+                  <EventCard key={event.id} event={event} isCreated={false} />
                 ))}
               </div>
             ) : (
@@ -305,18 +302,11 @@ function MyEvents() {
         )}
 
         {activeTab === 'created' && (
-          <div>
+          <div key="created-tab">
             {events.created.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {events.created.map((event, index) => (
-                  <motion.div
-                    key={event.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.1 }}
-                  >
-                    <EventCard event={event} isCreated={true} />
-                  </motion.div>
+                {events.created.map((event) => (
+                  <EventCard key={event.id} event={event} isCreated={true} />
                 ))}
               </div>
             ) : (

@@ -27,8 +27,10 @@ function EventDetails() {
       setLoading(true);
       const eventData = await eventService.getEventById(id);
       const all = await eventService.getAllEvents();
+  
       setEvent(eventData);
       setAllEvents(all.filter(e => e.id !== eventData.id));
+  
     } catch (error) {
       toast.error('Failed to load event details');
       navigate('/');
@@ -36,6 +38,7 @@ function EventDetails() {
       setLoading(false);
     }
   };
+  
 
   const handleJoinEvent = async () => {
     if (!isAuthenticated) {
@@ -51,12 +54,16 @@ function EventDetails() {
   
     try {
       setJoining(true);
-      await eventService.joinEvent(event.id);  // <-- ensure valid ID
+      await eventService.joinEvent(event.id);
       toast.success('Successfully joined the event!');
-      loadEvent(); // reload to update registeredCount
+      navigate('/my-events');
+      // ✅ Re-fetch the latest event data from backend
+      const updatedEvent = await eventService.getEventById(event.id);
+      setEvent(updatedEvent);
+  
     } catch (error) {
       if (error.response?.status === 403) {
-        toast.error(error.response.data || "You cannot join this event.");
+        toast.error(error.response.data || 'You cannot join this event.');
       } else {
         toast.error(error.message || 'Failed to join event');
       }
@@ -64,6 +71,7 @@ function EventDetails() {
       setJoining(false);
     }
   };
+  
   
 
   const handleExport = async () => {
@@ -81,6 +89,10 @@ function EventDetails() {
       toast.error('Failed to download Excel');
     }
   };
+  
+  
+
+ 
 
   const handleShare = async () => {
     if (navigator.share) {
@@ -140,7 +152,11 @@ function EventDetails() {
   }
 
   const isUserOrganizer = event.organiser?.id === user?.id;
-  const isJoined = event.isJoinedByUser; // <-- Make sure your backend sends this
+
+  const isJoined = event.isJoinedByUser;
+
+
+
 
   return (
     <div className="min-h-screen bg-gray-50">

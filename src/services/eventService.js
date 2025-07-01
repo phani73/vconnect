@@ -13,34 +13,25 @@ const getTokenHeader = () => ({
 export const eventService = {
   // Get all events (for Home Page)
   getAllEvents: async () => {
-    try {
-      const res = await axios.get(`${BASE_URL}`);
-      return res.data;
-    } catch (err) {
-      console.error(
-        "🔴 getAllEvents error:",
-        err.response?.data || err.message
-      );
-      throw err;
-    }
+    const res = await fetch("http://localhost:8081/api/events", {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+      },
+    });
+    if (!res.ok) throw new Error("Failed to fetch events");
+    return res.json(); // returns EventWithJoinStatus[]
   },
 
   // Get events created or joined by a specific user
   getUserEvents: async (userId) => {
-    try {
-      const res = await axios.get(
-        `${BASE_URL}/user/${userId}`,
-        getTokenHeader()
-      );
-      return res.data;
-    } catch (err) {
-      console.error(
-        "🔴getUserEvents error:",
-        err.response?.data || err.message
-      );
-      throw err;
-    }
+    const token = localStorage.getItem("token"); // or however you store it
+    return axios.get(`http://localhost:8081/api/events/user-events`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }).then(res => res.data);
   },
+  
 
   // Join an event
   joinEvent: async (eventId) => {
@@ -91,8 +82,8 @@ export const eventService = {
   // Get event by ID (for Edit)
   getEventById: async (eventId) => {
     try {
-      const res = await axios.get(`${BASE_URL}/${eventId}`, getTokenHeader());
-      return res.data;
+      const response = await axios.get(`${BASE_URL}/${eventId}`, getTokenHeader());
+      return response.data;
     } catch (err) {
       console.error(
         "🔴 getEventById error:",
@@ -141,6 +132,4 @@ export const eventService = {
       throw err;
     }
   },
-
-  
 };
