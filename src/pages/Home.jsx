@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect} from 'react';
 import { motion } from 'framer-motion';
 import { Search, Filter, MapPin, Calendar, Users, Zap } from 'lucide-react';
 import { toast } from 'react-hot-toast';
@@ -6,16 +6,20 @@ import MapComponent from '../components/MapComponent';
 import EventCard from '../components/EventCard';
 import { eventService } from '../services/eventService';
 import { useAuth } from '../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
+
 
 function Home() {
   const [events, setEvents] = useState([]);
   const [filteredEvents, setFilteredEvents] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'map'
+  const [viewMode, setViewMode] = useState('grid');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('ALL');
   const [userLocation, setUserLocation] = useState(null);
+
   const { isAuthenticated } = useAuth();
+  const navigate = useNavigate();
 
   useEffect(() => {
     loadEvents();
@@ -29,22 +33,35 @@ function Home() {
     try {
       setLoading(true);
       const data = await eventService.getAllEvents();
-      setEvents(data);
+  
+      const eventList = Array.isArray(data)
+      ? data
+      : data.events || data.created || [];  // make sure at least one works
+    
+    
+      console.log("Fetched event data:", data);
+      // adjust according to what your backend returns
+  
+      setEvents(eventList);
     } catch (error) {
       toast.error('Failed to load events');
+      setEvents([]); // fallback
     } finally {
       setLoading(false);
     }
   };
+  
+  
 
   const filterEvents = () => {
-    let filtered = events;
+    let filtered = [...events];
 
     if (searchTerm) {
+      const term = searchTerm.toLowerCase();
       filtered = filtered.filter(event =>
-        event.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        event.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        event.location.toLowerCase().includes(searchTerm.toLowerCase())
+        event.title.toLowerCase().includes(term) ||
+        event.description.toLowerCase().includes(term) ||
+        event.location.toLowerCase().includes(term)
       );
     }
 
@@ -55,23 +72,30 @@ function Home() {
     setFilteredEvents(filtered);
   };
 
-  const handleJoinEvent = async (eventId) => {
-    if (!isAuthenticated) {
-      toast.error('Please sign in to join events');
-      return;
-    }
+const handleJoinEvent = async (eventId) => {
+  if (!isAuthenticated) {
+    toast.error('Please sign in to join events');
+    navigate('/login');
+    return;
+  }
 
-    try {
-      await eventService.joinEvent(eventId);
-      toast.success('Successfully joined the event!');
-      loadEvents(); // Refresh events to update registration count
-    } catch (error) {
-      toast.error('Failed to join event');
-    }
-  };
+  try {
+    await eventService.joinEvent(eventId);
+    toast.success('Successfully joined the event!');
+    await loadEvents(); // refresh all events from backend
+
+  } catch (error) {
+    toast.error('Failed to join event');
+  }
+};
+
+
+
+
+  
+
 
   const handleEventClick = (event) => {
-    // This could open an event details modal or navigate
     console.log('Event clicked:', event);
   };
 
@@ -103,10 +127,8 @@ function Home() {
             <p className="text-xl md:text-2xl text-blue-100 mb-8 max-w-3xl mx-auto">
               Discover local events, volunteer opportunities, and make a difference in your community
             </p>
-            
-            {/* Stats */}
-            </motion.div>
-           </div>
+          </motion.div>
+        </div>
       </section>
 
       {/* Search and Filters */}
@@ -125,8 +147,9 @@ function Home() {
               />
             </div>
 
-            {/* Filters */}
+            {/* Filters and View Toggle */}
             <div className="flex items-center space-x-4">
+              {/* Category Filter */}
               <div className="flex items-center space-x-2">
                 <Filter className="text-gray-400 w-5 h-5" />
                 <select
@@ -173,22 +196,31 @@ function Home() {
       <section className="py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {viewMode === 'grid' ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {filteredEvents.map((event, index) => (
-                <motion.div
-                  key={event.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.1 }}
-                >
-                  <EventCard
-                    event={event}
-                    onJoin={handleJoinEvent}
-                    showJoinButton={isAuthenticated}
-                  />
-                </motion.div>
-              ))}
-            </div>
+            filteredEvents.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {filteredEvents.map((event, index) => (
+                  <motion.div
+                    key={event.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.1 }}
+                  >
+                    <EventCard
+          event={event}
+          onJoinRedirect={() => navigate(`/events/${event.id}`)}
+          showJoinButton={!event.isJoinedByUser}
+        />
+
+                  </motion.div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-12">
+                <MapPin className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                <h3 className="text-xl font-medium text-gray-600 mb-2">No events found</h3>
+                <p className="text-gray-500">Try adjusting your search or filters</p>
+              </div>
+            )
           ) : (
             <div className="h-96 lg:h-[600px] rounded-2xl overflow-hidden shadow-lg">
               <MapComponent
@@ -200,13 +232,8 @@ function Home() {
             </div>
           )}
 
-          {filteredEvents.length === 0 && (
-            <div className="text-center py-12">
-              <MapPin className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-              <h3 className="text-xl font-medium text-gray-600 mb-2">No events found</h3>
-              <p className="text-gray-500">Try adjusting your search or filters</p>
-            </div>
-          )}
+
+
         </div>
       </section>
     </div>

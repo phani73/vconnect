@@ -28,16 +28,27 @@ function App() {
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/events/:id" element={<EventDetails />} />
+
             <Route path="/create-event" element={
-              <PrivateRoute requiredRole="ORGANIZER">
-                <CreateEvent />
-              </PrivateRoute>
+             <PrivateRoute requiredRole="ORGANIZER">
+             <CreateEvent />
+           </PrivateRoute>
+           
             } />
+      <Route path="/events/:id/edit" element={
+        <PrivateRoute requiredRole="ORGANIZER">
+          <CreateEvent isEdit={true} />
+        </PrivateRoute>
+      } />
+
+
             <Route path="/my-events" element={
               <PrivateRoute>
                 <MyEvents />
               </PrivateRoute>
             } />
+   
+
             <Route path="/admin" element={
               <PrivateRoute requiredRole="ADMIN">
                 <AdminDashboard />
