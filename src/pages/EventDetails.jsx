@@ -32,10 +32,15 @@ const [registeredCount, setRegisteredCount] = useState(0);
       const res = await eventService.getEventById(id);
       // ✅ Use backend provided count
       setIsJoinedByUser(res.joined);
-      setEvent({ ...res.event, registeredCount: res.registeredCount });
-      setRegisteredCount(res.registeredCount);
-      console.log("📦 Final Rendered Event: ", res.event);
-      console.log("🙋‍♂️ isUserOrganizer:", res.event.organiser.id === user.id);
+setEvent(res);
+setIsJoinedByUser(res.joined); // or res.isJoined depending on your backend
+setRegisteredCount(res.registeredCount); // optional, since you can use event.registeredCount
+
+  
+console.log("📦 Final Rendered Event: ", res);
+
+      console.log("🙋‍♂️ isUserOrganizer:", res.organiser.id === user.id);
+
       console.log("🤝 isJoinedByUser:", res.joined);
       console.log("📊 registeredCount (from backend):", res.registeredCount);
       console.log("🌐 Raw backend response:", res);
@@ -218,14 +223,15 @@ const [registeredCount, setRegisteredCount] = useState(0);
                 <Calendar className="text-blue-600" />
                 <div>
                   <p className="font-medium text-gray-900">Date</p>
-                  {event.date && !isNaN(new Date(event.date)) ? (
+                  {event.date && event.time ? (
   <>
-    <p className="text-gray-600">{format(new Date(event.date), 'MMMM dd, yyyy')}</p>
-    <p className="text-gray-600">{format(new Date(event.date), 'h:mm a')}</p>
+    <p className="text-gray-600">{format(new Date(`${event.date}T${event.time}`), 'MMMM dd, yyyy')}</p>
+    <p className="text-gray-600">{format(new Date(`${event.date}T${event.time}`), 'h:mm a')}</p>
   </>
 ) : (
   <p className="text-gray-500 italic">Date not available</p>
 )}
+
 
                 </div>
               </div>

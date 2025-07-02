@@ -191,21 +191,22 @@ const handleJoinEvent = async (eventId) => {
           {viewMode === 'grid' ? (
             filteredEvents.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                      {filteredEvents.map(({ event, joined }, index) => (
-          <motion.div
-            key={event.id || index}  // fallback to index if id is missing
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.1 }}
-          >
-            <EventCard
-              event={event}
-              joined={joined}
-              onJoinRedirect={() => navigate(`/events/${event.id}`)}
-              showJoinButton={!joined}
-            />
-          </motion.div>
-        ))}
+{filteredEvents.map((eventObj, index) => (
+  <motion.div
+    key={eventObj.id || index}
+    initial={{ opacity: 0, y: 20 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={{ delay: index * 0.1 }}
+  >
+    <EventCard
+      event={eventObj}
+      joined={eventObj.joined}
+      onJoinRedirect={() => navigate(`/events/${eventObj.id}`)}
+      showJoinButton={!eventObj.joined}
+    />
+  </motion.div>
+))}
+
               </div>
             ) : (
               <div className="text-center py-12">

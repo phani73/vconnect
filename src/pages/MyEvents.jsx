@@ -159,14 +159,23 @@ function MyEvents() {
         <p className="text-gray-600 text-sm mb-4 line-clamp-2">{event.description}</p>
 
         <div className="space-y-2 mb-6">
-          <div className="flex items-center text-sm text-gray-600">
-            <Calendar className="w-4 h-4 mr-2 text-blue-500" />
-            <span>{format(new Date(event.date), 'MMM dd, yyyy')}</span>
-          </div>
-          <div className="flex items-center text-sm text-gray-600">
-            <Clock className="w-4 h-4 mr-2 text-emerald-500" />
-            <span>{format(new Date(event.date), 'h:mm a')}</span>
-          </div>
+  {(() => {
+    const combinedDateTime = new Date(`${event.date}T${event.time}`); // "2025-07-02T03:24"
+    return (
+      <>
+        <div className="flex items-center text-sm text-gray-600">
+          <Calendar className="w-4 h-4 mr-2 text-blue-500" />
+          <span>{format(combinedDateTime, 'MMM dd, yyyy')}</span>
+        </div>
+        <div className="flex items-center text-sm text-gray-600">
+          <Clock className="w-4 h-4 mr-2 text-emerald-500" />
+          <span>{format(combinedDateTime, 'h:mm a')}</span>
+        </div>
+      </>
+    );
+  })()}
+
+
           <div className="flex items-center text-sm text-gray-600">
             <MapPin className="w-4 h-4 mr-2 text-orange-500" />
             <span className="line-clamp-1">{event.location}</span>
