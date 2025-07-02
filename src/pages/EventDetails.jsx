@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 import {
   Calendar, MapPin, Users, ArrowLeft,
-  Share2, Heart, Building2, AlertCircle, Download
+  Share2, Download, Building2, AlertCircle
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { eventService } from '../services/eventService';
@@ -16,52 +16,62 @@ function EventDetails() {
   const [event, setEvent] = useState(null);
   const [loading, setLoading] = useState(true);
   const [joining, setJoining] = useState(false);
-  const [allEvents, setAllEvents] = useState([]);
+  const [isJoinedByUser, setIsJoinedByUser] = useState(false);
+const [registeredCount, setRegisteredCount] = useState(0);
+
 
   useEffect(() => {
+    console.log("🔄 useEffect triggered with event id:", id);
     loadEvent();
   }, [id]);
 
+
+
   const loadEvent = async () => {
     try {
-      setLoading(true);
-      const eventData = await eventService.getEventById(id);
-      const all = await eventService.getAllEvents();
-  
-      setEvent(eventData);
-      setAllEvents(all.filter(e => e.id !== eventData.id));
-  
-    } catch (error) {
-      toast.error('Failed to load event details');
-      navigate('/');
+      const res = await eventService.getEventById(id);
+      // ✅ Use backend provided count
+      setIsJoinedByUser(res.joined);
+      setEvent({ ...res.event, registeredCount: res.registeredCount });
+      setRegisteredCount(res.registeredCount);
+      console.log("📦 Final Rendered Event: ", res.event);
+      console.log("🙋‍♂️ isUserOrganizer:", res.event.organiser.id === user.id);
+      console.log("🤝 isJoinedByUser:", res.joined);
+      console.log("📊 registeredCount (from backend):", res.registeredCount);
+      console.log("🌐 Raw backend response:", res);
+    } catch (err) {
+      toast.error("Failed to load event details");
     } finally {
       setLoading(false);
     }
   };
   
-
+  
   const handleJoinEvent = async () => {
+    console.log("👉 handleJoinEvent triggered");
+  
     if (!isAuthenticated) {
       toast.error('Please sign in to join events');
       navigate('/login');
       return;
     }
   
-    if (!event?.id) {
-      toast.error('Invalid event. Cannot join.');
-      return;
-    }
-  
     try {
+      console.log("🔐 User authenticated. Joining event ID:", event.id);
       setJoining(true);
-      await eventService.joinEvent(event.id);
-      toast.success('Successfully joined the event!');
-      navigate('/my-events');
-      // ✅ Re-fetch the latest event data from backend
-      const updatedEvent = await eventService.getEventById(event.id);
-      setEvent(updatedEvent);
   
+      // POST to join event
+      await eventService.joinEvent(event.id);
+  
+      toast.success('Successfully joined the event!');
+      console.log("✅ Event joined successfully.");
+  
+      // 🔁 Correctly refetch updated event with fresh join status and registeredCount
+      await loadEvent(); 
     } catch (error) {
+      console.error("❌ Join failed:", error);
+  
+      // Good: checking for forbidden
       if (error.response?.status === 403) {
         toast.error(error.response.data || 'You cannot join this event.');
       } else {
@@ -69,12 +79,12 @@ function EventDetails() {
       }
     } finally {
       setJoining(false);
+      console.log("🔁 Finished handleJoinEvent");
     }
   };
   
-  
-
   const handleExport = async () => {
+    console.log("⬇️ Exporting participants...");
     try {
       const blob = await eventService.downloadParticipantsExcel(event.id);
       const url = window.URL.createObjectURL(blob);
@@ -85,16 +95,15 @@ function EventDetails() {
       link.click();
       document.body.removeChild(link);
       toast.success('Excel file downloaded');
+      console.log("✅ Excel downloaded.");
     } catch (error) {
+      console.error("❌ Failed to download Excel:", error);
       toast.error('Failed to download Excel');
     }
   };
-  
-  
-
- 
 
   const handleShare = async () => {
+    console.log("📤 Sharing event...");
     if (navigator.share) {
       try {
         await navigator.share({
@@ -102,10 +111,14 @@ function EventDetails() {
           text: event.description,
           url: window.location.href,
         });
-      } catch (error) {}
+        console.log("✅ Shared via native share API");
+      } catch (error) {
+        console.warn("⚠️ Native share cancelled or failed");
+      }
     } else {
       await navigator.clipboard.writeText(window.location.href);
       toast.success('Link copied to clipboard!');
+      console.log("✅ Link copied to clipboard");
     }
   };
 
@@ -126,6 +139,7 @@ function EventDetails() {
   };
 
   if (loading) {
+    console.log("⏳ Still loading...");
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
@@ -134,6 +148,7 @@ function EventDetails() {
   }
 
   if (!event) {
+    console.warn("⚠️ Event not found!");
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -152,11 +167,14 @@ function EventDetails() {
   }
 
   const isUserOrganizer = event.organiser?.id === user?.id;
+  const isJoined = isJoinedByUser;
 
-  const isJoined = event.isJoinedByUser;
+  console.log(isJoined);
 
-
-
+  console.log("📦 Final Rendered Event:", event);
+  console.log("🙋‍♂️ isUserOrganizer:", isUserOrganizer);
+  console.log("🤝 isJoinedByUser:", isJoined);
+  console.log("📊 registeredCount:", event.registeredCount);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -222,7 +240,10 @@ function EventDetails() {
                 <Users className="text-purple-600" />
                 <div>
                   <p className="font-medium text-gray-900">Capacity</p>
-                  <p className="text-gray-600">{event.registeredCount} / {event.maxCapacity} registered</p>
+                  <p className="text-gray-600">
+  {(event.registeredCount ?? 0)} / {event.maxCapacity} registered
+</p>
+
                 </div>
               </div>
               <div className="flex gap-3">
@@ -238,8 +259,8 @@ function EventDetails() {
 
         <div className="sticky top-24 bg-white shadow rounded-2xl p-6">
           <div className="text-center mb-6">
-            <p className="text-3xl font-bold">{event.registeredCount}</p>
-            <p className="text-gray-500">People Registered</p>
+           
+            <p className="text-gray-500">Be a part of the community</p>
           </div>
           {event.registeredCount >= event.maxCapacity ? (
             <div className="bg-red-100 text-red-700 text-center py-3 rounded-lg font-medium mb-6">

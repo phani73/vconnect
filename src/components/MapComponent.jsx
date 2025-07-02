@@ -18,7 +18,6 @@ function RecenterMap({ center }) {
 
 function MapComponent({ events, onEventClick, center, onLocationChange }) {
   const [userLocation, setUserLocation] = useState(center || { lat: 40.7128, lng: -74.0060 });
-
   const mapRef = useRef(null);
 
   useEffect(() => {
@@ -27,7 +26,7 @@ function MapComponent({ events, onEventClick, center, onLocationChange }) {
         (position) => {
           const pos = {
             lat: position.coords.latitude,
-            lng: position.coords.longitude
+            lng: position.coords.longitude,
           };
           setUserLocation(pos);
           if (onLocationChange) onLocationChange(pos);
@@ -36,12 +35,6 @@ function MapComponent({ events, onEventClick, center, onLocationChange }) {
       );
     }
   }, [onLocationChange]);
-
-  const centerOnUserLocation = () => {
-    if (mapRef.current) {
-      mapRef.current.setView(userLocation, 14);
-    }
-  };
 
   return (
     <div className="relative w-full h-full">
@@ -57,9 +50,9 @@ function MapComponent({ events, onEventClick, center, onLocationChange }) {
           attribution="&copy; <a href='https://www.openstreetmap.org/copyright'>OpenStreetMap</a> contributors"
         />
 
-        <RecenterMap center={userLocation} />
+        <RecenterMap center={center} />
 
-        {/* Circle around user location for visual effect */}
+        {/* Always show user location marker and circle */}
         <Circle
           center={userLocation}
           radius={100}
@@ -70,8 +63,6 @@ function MapComponent({ events, onEventClick, center, onLocationChange }) {
             weight: 1
           }}
         />
-
-        {/* Marker for user location */}
         <Marker
           position={userLocation}
           icon={L.divIcon({
@@ -84,10 +75,11 @@ function MapComponent({ events, onEventClick, center, onLocationChange }) {
 
         {/* Event markers */}
         {events && events.map((event, idx) => (
-          event.latitude && event.longitude && (
-            <Marker
-              key={idx}
-              position={{ lat: event.latitude, lng: event.longitude }}
+  event.latitude != null && event.longitude != null && !isNaN(event.latitude) && !isNaN(event.longitude) && (
+    <Marker
+      key={idx}
+      position={{ lat: Number(event.latitude), lng: Number(event.longitude) }} // ✅ Corrected
+
               icon={L.divIcon({
                 html: `<div style="background:${
                   event.category === 'VOLUNTEER'
@@ -112,7 +104,11 @@ function MapComponent({ events, onEventClick, center, onLocationChange }) {
       {/* Center button */}
       <div className="absolute top-4 right-4 space-y-2 z-[1000]">
         <button
-          onClick={centerOnUserLocation}
+          onClick={() => {
+            if (mapRef.current && userLocation) {
+              mapRef.current.setView(userLocation, 14);
+            }
+          }}
           className="p-3 bg-white rounded-lg shadow-lg hover:shadow-xl transition-shadow border border-gray-200"
           title="Center on your location"
         >

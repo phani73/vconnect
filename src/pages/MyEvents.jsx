@@ -17,108 +17,123 @@ function MyEvents() {
   const [events, setEvents] = useState({ created: [], registered: [] });
   const [loading, setLoading] = useState(true);
 
+  console.log('🟢 Current user:', user);
 
-  const loadUserEvents = async () => {
+  const loadCreatedEvents = async () => {
+    console.log('📥 Loading created events...');
     try {
       setLoading(true);
       const res = await eventService.getUserEvents(user.id);
-      setEvents({
+      console.log('✅ Created events response:', res.created);
+      setEvents(prev => ({
+        ...prev,
         created: res?.created || [],
-        registered: res?.registered || [],
-      });
+      }));
     } catch (error) {
-      console.error('Failed to load events:', error);
-      toast.error('Failed to load your events');
+      console.error('❌ Failed to load created events:', error);
+      toast.error('Could not load created events');
     } finally {
       setLoading(false);
     }
   };
-  
-  useEffect(() => {
-    if (user?.id) {
-      loadUserEvents();
+
+  const loadRegisteredEvents = async () => {
+    console.log('📥 Loading registered events...');
+    try {
+      setLoading(true);
+      const res = await eventService.getUserEvents(user.id);
+      console.log('✅ Registered events response:', res.registered);
+      setEvents(prev => ({
+        ...prev,
+        registered: res?.registered || [],
+      }));
+    } catch (error) {
+      console.error('❌ Failed to load registered events:', error);
+      toast.error('Could not load registered events');
+    } finally {
+      setLoading(false);
     }
+  };
+
+  const reloadCurrentTab = () => {
+    console.log(`🔁 Reloading tab: ${activeTab}`);
+    if (activeTab === 'registered') loadRegisteredEvents();
+    else if (activeTab === 'created') loadCreatedEvents();
+  };
+
+  useEffect(() => {
+    if (!user?.id) {
+      console.warn('⚠️ No user ID found. Skipping fetch.');
+      return;
+    }
+
+    console.log('🚀 Fetching events for user:', user.id);
+
+    const fetchEvents = async () => {
+      try {
+        setLoading(true);
+        const res = await eventService.getUserEvents(user.id);
+        console.log('✅ All user events:', res);
+        setEvents({
+          created: res?.created || [],
+          registered: res?.registered || [],
+        });
+      } catch (error) {
+        console.error('❌ Failed to load events:', error);
+        toast.error('Could not load events');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchEvents();
   }, [user]);
-  
-  
-
-  // const loadUserEvents = async () => {
-  //   try {
-  //     setLoading(true);
-  
-  //     const data = await eventService.getUserEvents(user.id);
-  //     setCreatedEvents(res.created);      // events created by user (organizer)
-  //     setRegisteredEvents(res.registered); /
-  //     setEvents({
-  //       created: data?.created || [],
-  //       registered: data?.registered || [],
-  //     });
-  
-  //     console.log("Loaded events:", data);
-  //     console.log("Parsed events:", {
-  //       created: data?.created || [],
-  //       registered: data?.registered || [],
-  //     });
-  
-  //   } catch (error) {
-  //     console.error('Failed to load events:', error);
-  //     toast.error('Failed to load your events');
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
-  
-
-
 
   const handleLeaveEvent = async (eventId) => {
     if (!confirm('Are you sure you want to leave this event?')) return;
+    console.log('📤 Leaving event:', eventId);
     try {
-      console.log(`User ${user.id} leaving event ${eventId}`);
       await eventService.leaveEvent(eventId, user.id);
       toast.success('Successfully left the event');
-      loadUserEvents();
+      reloadCurrentTab();
     } catch (error) {
-      console.error('Failed to leave event:', error);
+      console.error('❌ Failed to leave event:', error);
       toast.error('Failed to leave event');
     }
   };
 
   const handleDeleteEvent = async (eventId) => {
-    if (!confirm('Are you sure you want to delete this event? This action cannot be undone.')) return;
+    if (!confirm('Are you sure you want to delete this event?')) return;
+    console.log('🗑 Deleting event:', eventId);
     try {
-      console.log(`User ${user.id} deleting event ${eventId}`);
       await eventService.deleteEvent(eventId, user.id);
       toast.success('Event deleted successfully');
-      loadUserEvents();
+      reloadCurrentTab();
     } catch (error) {
-      console.error('Failed to delete event:', error);
+      console.error('❌ Failed to delete event:', error);
       toast.error('Failed to delete event');
     }
   };
 
   const getCategoryColor = (category) => {
     switch (category) {
-      case 'VOLUNTEER':
-        return 'from-emerald-500 to-emerald-600';
-      case 'DONATION':
-        return 'from-orange-500 to-orange-600';
-      default:
-        return 'from-blue-500 to-blue-600';
+      case 'VOLUNTEER': return 'from-emerald-500 to-emerald-600';
+      case 'DONATION': return 'from-orange-500 to-orange-600';
+      default: return 'from-blue-500 to-blue-600';
     }
   };
 
-  
-  
   const getCategoryBadgeColor = (category) => {
     switch (category) {
-      case 'VOLUNTEER':
-        return 'bg-emerald-100 text-emerald-700';
-      case 'DONATION':
-        return 'bg-orange-100 text-orange-700';
-      default:
-        return 'bg-blue-100 text-blue-700';
+      case 'VOLUNTEER': return 'bg-emerald-100 text-emerald-700';
+      case 'DONATION': return 'bg-orange-100 text-orange-700';
+      default: return 'bg-blue-100 text-blue-700';
     }
+  };
+
+  const handleTabChange = (tab) => {
+    console.log(`🟦 Switching tab to: ${tab}`);
+    setActiveTab(tab);
   };
 
   const EventCard = ({ event, isCreated = false }) => (
@@ -127,7 +142,6 @@ function MyEvents() {
       animate={{ opacity: 1, y: 0 }}
       className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100 overflow-hidden"
     >
-      {/* Event Image */}
       <div className="relative h-48">
         <img
           src={event.imageUrl || 'https://images.pexels.com/photos/1157255/pexels-photo-1157255.jpeg?auto=compress&cs=tinysrgb&w=600'}
@@ -140,30 +154,29 @@ function MyEvents() {
         <div className={`absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t ${getCategoryColor(event.category)} opacity-80`} />
       </div>
 
-        <div className="p-6">
-          <h3 className="text-xl font-bold text-gray-900 mb-2 line-clamp-2">{event.title}</h3>
-          <p className="text-gray-600 text-sm mb-4 line-clamp-2">{event.description}</p>
+      <div className="p-6">
+        <h3 className="text-xl font-bold text-gray-900 mb-2 line-clamp-2">{event.title}</h3>
+        <p className="text-gray-600 text-sm mb-4 line-clamp-2">{event.description}</p>
 
-          <div className="space-y-2 mb-6">
-            <div className="flex items-center text-sm text-gray-600">
-              <Calendar className="w-4 h-4 mr-2 text-blue-500" />
-              <span>{format(new Date(event.date), 'MMM dd, yyyy')}</span>
-            </div>
-            <div className="flex items-center text-sm text-gray-600">
-              <Clock className="w-4 h-4 mr-2 text-emerald-500" />
-              <span>{format(new Date(event.date), 'h:mm a')}</span>
-            </div>
-            <div className="flex items-center text-sm text-gray-600">
-              <MapPin className="w-4 h-4 mr-2 text-orange-500" />
-              <span className="line-clamp-1">{event.location}</span>
-            </div>
-            <div className="flex items-center text-sm text-gray-600">
-              <Users className="w-4 h-4 mr-2 text-purple-500" />
-              <span>{event.registeredCount} / {event.maxCapacity} registered</span>
-            </div>
+        <div className="space-y-2 mb-6">
+          <div className="flex items-center text-sm text-gray-600">
+            <Calendar className="w-4 h-4 mr-2 text-blue-500" />
+            <span>{format(new Date(event.date), 'MMM dd, yyyy')}</span>
           </div>
+          <div className="flex items-center text-sm text-gray-600">
+            <Clock className="w-4 h-4 mr-2 text-emerald-500" />
+            <span>{format(new Date(event.date), 'h:mm a')}</span>
+          </div>
+          <div className="flex items-center text-sm text-gray-600">
+            <MapPin className="w-4 h-4 mr-2 text-orange-500" />
+            <span className="line-clamp-1">{event.location}</span>
+          </div>
+          <div className="flex items-center text-sm text-gray-600">
+            <Users className="w-4 h-4 mr-2 text-purple-500" />
+            <span>{event.registeredCount} / {event.maxCapacity} registered</span>
+          </div>
+        </div>
 
-        {/* Action Buttons */}
         <div className="flex items-center justify-between">
           <button
             onClick={() => navigate(`/events/${event.id}`)}
@@ -213,9 +226,6 @@ function MyEvents() {
     );
   }
 
-  console.log('Rendering MyEvents. Active tab:', activeTab);
-  console.log('Events data:', events);
-
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="bg-white border-b border-gray-200">
@@ -230,10 +240,7 @@ function MyEvents() {
               <motion.button
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
-                onClick={() => {
-                  console.log('Navigating to create-event page');
-                  navigate('/create-event');
-                }}
+                onClick={() => navigate('/create-event')}
                 className="mt-4 md:mt-0 px-6 py-3 bg-gradient-to-r from-blue-500 to-emerald-500 text-white font-medium rounded-lg hover:from-blue-600 hover:to-emerald-600 transition-all flex items-center space-x-2"
               >
                 <Plus className="w-5 h-5" />
@@ -247,32 +254,25 @@ function MyEvents() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex space-x-1 bg-gray-100 p-1 rounded-lg mb-8 max-w-md">
           <button
-            onClick={() => {
-              console.log('Switched to registered tab');
-              setActiveTab('registered');
-            }}
+            onClick={() => setActiveTab('registered')}
             className={`flex-1 px-4 py-2 text-sm font-medium rounded-md transition-colors ${
               activeTab === 'registered' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-600 hover:text-blue-600'
             }`}
           >
             <div className="flex items-center justify-center space-x-2">
-          <Heart className="w-4 h-4" />
-        <span>Registered ({events?.registered?.length || 0})</span>
-        </div>
-
+              <Heart className="w-4 h-4" />
+              <span>Registered ({events?.registered?.length || 0})</span>
+            </div>
           </button>
           <button
-            onClick={() => {
-              console.log('Switched to created tab');
-              setActiveTab('created');
-            }}
+            onClick={() => setActiveTab('created')}
             className={`flex-1 px-4 py-2 text-sm font-medium rounded-md transition-colors ${
               activeTab === 'created' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-600 hover:text-blue-600'
             }`}
           >
             <div className="flex items-center justify-center space-x-2">
               <Calendar className="w-4 h-4" />
-              <span>Created ({events.created.length})</span>
+              <span>Created ({events?.created?.length || 0})</span>
             </div>
           </button>
         </div>
@@ -316,10 +316,7 @@ function MyEvents() {
                 <p className="text-gray-500 mb-6">You haven't created any events yet.</p>
                 {(user.role === 'ORGANIZER' || user.role === 'ADMIN') ? (
                   <button
-                    onClick={() => {
-                      console.log('Clicked create your first event');
-                      navigate('/create-event');
-                    }}
+                    onClick={() => navigate('/create-event')}
                     className="px-6 py-3 bg-gradient-to-r from-blue-500 to-emerald-500 text-white font-medium rounded-lg hover:from-blue-600 hover:to-emerald-600 transition-all"
                   >
                     Create Your First Event

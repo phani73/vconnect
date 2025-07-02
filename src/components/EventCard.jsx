@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { Calendar, MapPin, Users, Clock, Heart } from 'lucide-react';
 import { format } from 'date-fns';
 
-function EventCard({ event, onJoin, showJoinButton = true }) {
+function EventCard({ event, onJoinRedirect, showJoinButton = true }) {
   const navigate = useNavigate();
 
   const getCategoryColor = (category) => {
@@ -34,6 +34,11 @@ function EventCard({ event, onJoin, showJoinButton = true }) {
     navigate(`/events/${event.id}`);
   };
 
+  const getFormattedDate = (dateStr) => {
+    const parsed = new Date(dateStr);
+    return isNaN(parsed.getTime()) ? 'Date TBD' : format(parsed, 'MMM dd, yyyy');
+  };
+
   return (
     <motion.div
       whileHover={{ y: -4, scale: 1.02 }}
@@ -43,7 +48,7 @@ function EventCard({ event, onJoin, showJoinButton = true }) {
       {/* Event Image */}
       <div className="relative h-48 overflow-hidden">
         <img
-          src={event.imageUrl || `https://images.pexels.com/photos/1157255/pexels-photo-1157255.jpeg?auto=compress&cs=tinysrgb&w=600`}
+          src={event.imageUrl || 'https://images.pexels.com/photos/1157255/pexels-photo-1157255.jpeg?auto=compress&cs=tinysrgb&w=600'}
           alt={event.title}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
         />
@@ -60,28 +65,28 @@ function EventCard({ event, onJoin, showJoinButton = true }) {
       <div className="p-6">
         <div className="flex items-start justify-between mb-3">
           <h3 className="text-xl font-bold text-gray-900 line-clamp-2 flex-1">
-            {event.title}
+            {event.title || 'Untitled Event'}
           </h3>
         </div>
 
         <p className="text-gray-600 text-sm mb-4 line-clamp-2">
-          {event.description}
+          {event.description || 'No description provided.'}
         </p>
 
         <div className="space-y-3 mb-6">
           <div className="flex items-center text-sm text-gray-600">
             <Calendar className="w-4 h-4 mr-2 text-blue-500" />
-            <span>{format(new Date(event.date), 'MMM dd, yyyy')}</span>
+            <span>{getFormattedDate(event.date)}</span>
           </div>
-          
+
           <div className="flex items-center text-sm text-gray-600">
             <Clock className="w-4 h-4 mr-2 text-emerald-500" />
-            <span>{format(new Date(event.date), 'h:mm a')}</span>
+            <span>{event.time || 'TBD'}</span>
           </div>
 
           <div className="flex items-center text-sm text-gray-600">
             <MapPin className="w-4 h-4 mr-2 text-orange-500" />
-            <span className="line-clamp-1">{event.location}</span>
+            <span className="line-clamp-1">{event.location || 'Location TBD'}</span>
           </div>
 
           <div className="flex items-center text-sm text-gray-600">
@@ -90,19 +95,19 @@ function EventCard({ event, onJoin, showJoinButton = true }) {
           </div>
         </div>
 
-        {/* Action Buttons */}
+        {/* Action Button */}
         <div className="flex items-center justify-between">
           <div className="text-sm text-gray-500">
-            by {event.organizer?.name || 'VConnect Organizer'}
+            by {event.organiser?.name || 'VConnect Organizer'}
           </div>
-          
+
           {showJoinButton && (
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.98 }}
               onClick={(e) => {
                 e.stopPropagation();
-                if (onJoin) onJoin(event.id);
+                if (onJoinRedirect) onJoinRedirect();
               }}
               className="join-button px-4 py-2 bg-gradient-to-r from-blue-500 to-emerald-500 text-white text-sm font-medium rounded-lg hover:from-blue-600 hover:to-emerald-600 transition-all"
             >

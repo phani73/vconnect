@@ -24,14 +24,23 @@ export const eventService = {
 
   // Get events created or joined by a specific user
   getUserEvents: async (userId) => {
-    const token = localStorage.getItem("token"); // or however you store it
-    return axios.get(`http://localhost:8081/api/events/user-events`, {
+    const token = localStorage.getItem("token");
+    const response = await axios.get(`${BASE_URL}/user-events`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
-    }).then(res => res.data);
+    });
+
+    const data = response.data || {};
+    return {
+      created: Array.isArray(data.created)
+        ? data.created.map((item) => item.event)
+        : [],
+      registered: Array.isArray(data.registered)
+        ? data.registered.map((item) => item.event)
+        : [],
+    };
   },
-  
 
   // Join an event
   joinEvent: async (eventId) => {
@@ -47,6 +56,18 @@ export const eventService = {
       throw err;
     }
   },
+  
+  getEventById: async (eventId) => {
+    const res = await fetch(`http://localhost:8081/api/events/${eventId}`, {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+      },
+    });
+  
+    if (!res.ok) throw new Error("Failed to fetch event by ID");
+    return await res.json(); // returns { event, isJoinedByUser, registeredCount }
+  },
+  
 
   // Leave an event
   leaveEvent: async (eventId) => {
@@ -75,20 +96,6 @@ export const eventService = {
       return res.data;
     } catch (err) {
       console.error("🔴 createEvent error:", err.response?.data || err.message);
-      throw err;
-    }
-  },
-
-  // Get event by ID (for Edit)
-  getEventById: async (eventId) => {
-    try {
-      const response = await axios.get(`${BASE_URL}/${eventId}`, getTokenHeader());
-      return response.data;
-    } catch (err) {
-      console.error(
-        "🔴 getEventById error:",
-        err.response?.data || err.message
-      );
       throw err;
     }
   },
@@ -131,5 +138,14 @@ export const eventService = {
       console.error("🔴 deleteEvent error:", err.response?.data || err.message);
       throw err;
     }
+  },
+  getRegisteredEvents: async (userId) => {
+    const response = await fetch(`/api/events/registered`, {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+      },
+    });
+    if (!response.ok) throw new Error("Failed to fetch registered events");
+    return await response.json();
   },
 };

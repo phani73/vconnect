@@ -32,25 +32,18 @@ function Home() {
   const loadEvents = async () => {
     try {
       setLoading(true);
-      const data = await eventService.getAllEvents();
-  
-      const eventList = Array.isArray(data)
-      ? data
-      : data.events || data.created || [];  // make sure at least one works
-    
-    
-      console.log("Fetched event data:", data);
-      // adjust according to what your backend returns
-  
-      setEvents(eventList);
+      const raw = await eventService.getAllEvents();
+      console.log("Fetched event data from backend:", raw);
+      setEvents(raw);
     } catch (error) {
+      
       toast.error('Failed to load events');
-      setEvents([]); // fallback
+      console.error("Event fetch error:", error); // Add this too
+      setEvents([]);
     } finally {
       setLoading(false);
     }
   };
-  
   
 
   const filterEvents = () => {
@@ -68,7 +61,7 @@ function Home() {
     if (selectedCategory !== 'ALL') {
       filtered = filtered.filter(event => event.category === selectedCategory);
     }
-
+    console.log(filterEvents)
     setFilteredEvents(filtered);
   };
 
@@ -198,21 +191,21 @@ const handleJoinEvent = async (eventId) => {
           {viewMode === 'grid' ? (
             filteredEvents.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {filteredEvents.map((event, index) => (
-                  <motion.div
-                    key={event.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.1 }}
-                  >
-                    <EventCard
-          event={event}
-          onJoinRedirect={() => navigate(`/events/${event.id}`)}
-          showJoinButton={!event.isJoinedByUser}
-        />
-
-                  </motion.div>
-                ))}
+                      {filteredEvents.map(({ event, joined }, index) => (
+          <motion.div
+            key={event.id || index}  // fallback to index if id is missing
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: index * 0.1 }}
+          >
+            <EventCard
+              event={event}
+              joined={joined}
+              onJoinRedirect={() => navigate(`/events/${event.id}`)}
+              showJoinButton={!joined}
+            />
+          </motion.div>
+        ))}
               </div>
             ) : (
               <div className="text-center py-12">

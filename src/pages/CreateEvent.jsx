@@ -15,6 +15,7 @@ import {
 import { toast } from 'react-hot-toast';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
+import MapComponent from '../components/MapComponent'; // adjust path as needed
 
 function CreateEvent({ isEdit = false }) {
   const navigate = useNavigate();
@@ -41,9 +42,9 @@ function CreateEvent({ isEdit = false }) {
           const res = await axios.get(`http://localhost:8081/api/events/${id}`, {
             headers: { Authorization: `Bearer ${token}` },
           });
-
-          const event = res.data;
-
+  
+          const event = res.data.event; // ✅ fix here
+  
           reset({
             title: event.title,
             description: event.description,
@@ -55,16 +56,17 @@ function CreateEvent({ isEdit = false }) {
             latitude: event.latitude,
             longitude: event.longitude,
           });
-
+  
           setExistingImage(event.imageUrl);
         } catch (err) {
           toast.error('Failed to load event');
         }
       };
-
+  
       fetchEvent();
     }
   }, [isEdit, id, reset]);
+  
 
   const onSubmit = async (data) => {
     try {
@@ -95,6 +97,8 @@ function CreateEvent({ isEdit = false }) {
           },
         });
         toast.success('Event updated successfully!');
+        navigate('/my-events', { state: { refreshCreated: true } });
+
       } else {
         await axios.post('http://localhost:8081/api/events/create', formData, {
           headers: {
@@ -103,6 +107,8 @@ function CreateEvent({ isEdit = false }) {
           },
         });
         toast.success('Event created successfully!');
+        navigate('/my-events', { state: { refreshCreated: true } });
+
       }
 
       setLoading(false);
@@ -347,7 +353,7 @@ function CreateEvent({ isEdit = false }) {
                     </div>
                     {errors.time && <p className="mt-1 text-sm text-red-600">{errors.time.message}</p>}
                   </div>
-  
+                        
                   {/* Coordinates */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Latitude (Optional)</label>
@@ -372,6 +378,27 @@ function CreateEvent({ isEdit = false }) {
                   </div>
                 </div>
               </div>
+
+              {watch('latitude') && watch('longitude') && (
+  <div className="mt-8">
+    <h2 className="text-xl font-semibold text-gray-900 mb-4">Event Location Preview</h2>
+    <div className="h-[300px] w-full">
+      <MapComponent
+        events={[{
+          title: watch('title') || 'Event Preview',
+          latitude: parseFloat(watch('latitude')),
+          longitude: parseFloat(watch('longitude')),
+          category: watch('category') || 'COMMUNITY',
+        }]}
+        center={{
+          lat: parseFloat(watch('latitude')),
+          lng: parseFloat(watch('longitude')),
+        }}
+        onEventClick={() => {}}
+      />
+    </div>
+  </div>
+)}
   
               {/* Upload Image */}
               <div>
