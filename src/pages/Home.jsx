@@ -169,7 +169,7 @@ const handleJoinEvent = async (eventId) => {
                 >
                   Grid
                 </button>
-                <button
+                {/* <button
                   onClick={() => setViewMode('map')}
                   className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                     viewMode === 'map'
@@ -178,7 +178,7 @@ const handleJoinEvent = async (eventId) => {
                   }`}
                 >
                   Map
-                </button>
+                </button> */}
               </div>
             </div>
           </div>

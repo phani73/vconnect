@@ -43,7 +43,7 @@ function CreateEvent({ isEdit = false }) {
             headers: { Authorization: `Bearer ${token}` },
           });
   
-          const event = res.data.event; // ✅ fix here
+          const event = res.data; // ✅ FIXED
   
           reset({
             title: event.title,
@@ -66,6 +66,7 @@ function CreateEvent({ isEdit = false }) {
       fetchEvent();
     }
   }, [isEdit, id, reset]);
+  
   
 
   const onSubmit = async (data) => {

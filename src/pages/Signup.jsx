@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { useForm } from 'react-hook-form';
-import { toast } from 'react-hot-toast';
-import { Mail, Lock, Eye, EyeOff, MapPin, User, Shield } from 'lucide-react';
-import { useAuth } from '../context/AuthContext';
+import React, { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
+import { useForm } from "react-hook-form";
+import { toast } from "react-hot-toast";
+import { Mail, Lock, Eye, EyeOff, MapPin, User, Shield } from "lucide-react";
+import { useAuth } from "../context/AuthContext";
+import bgimage from "../assets/bgimage.jpg"; // Ensure this path is correct
 
 function Signup() {
   const [showPassword, setShowPassword] = useState(false);
@@ -12,38 +13,56 @@ function Signup() {
   const [loading, setLoading] = useState(false);
   const { signup } = useAuth();
   const navigate = useNavigate();
-  const { register, handleSubmit, watch, formState: { errors } } = useForm();
 
-  const password = watch('password');
+  const {
+    register,
+    handleSubmit,
+    watch,
+    formState: { errors },
+  } = useForm();
+
+  const password = watch("password");
 
   const onSubmit = async (data) => {
     try {
       setLoading(true);
       const { confirmPassword, ...signupData } = data;
       await signup(signupData);
-      toast.success('Account created successfully!');
-      navigate('/');
+      toast.success("Account created successfully!");
+      navigate("/");
     } catch (error) {
-      toast.error(error.message || 'Signup failed');
+      toast.error(error.message || "Signup failed");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full">
+    <div
+      className="relative min-h-screen bg-cover bg-center flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8"
+      style={{
+        backgroundImage: `url(${bgimage})`,
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+      }}
+    >
+      {/* Dark overlay */}
+      <div className="absolute inset-0 bg-black opacity-60 z-0" />
+
+      <div className="relative z-10 max-w-md w-full">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white rounded-2xl shadow-xl p-8 border border-gray-100"
+          className="bg-white/90 backdrop-blur-md rounded-2xl shadow-xl p-8 border border-gray-200"
         >
           {/* Header */}
           <div className="text-center mb-8">
             <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-emerald-500 rounded-2xl flex items-center justify-center mx-auto mb-4">
               <MapPin className="w-8 h-8 text-white" />
             </div>
-            <h2 className="text-3xl font-bold text-gray-900 mb-2">Join VConnect</h2>
+            <h2 className="text-3xl font-bold text-gray-900 mb-1">
+              Join VConnect
+            </h2>
             <p className="text-gray-600">Create your account to get started</p>
           </div>
 
@@ -60,21 +79,23 @@ function Signup() {
                 </div>
                 <input
                   type="text"
-                  {...register('name', {
-                    required: 'Name is required',
+                  {...register("name", {
+                    required: "Name is required",
                     minLength: {
                       value: 2,
-                      message: 'Name must be at least 2 characters'
-                    }
+                      message: "Name must be at least 2 characters",
+                    },
                   })}
-                  className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors ${
-                    errors.name ? 'border-red-300' : 'border-gray-300'
+                  className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                    errors.name ? "border-red-300" : "border-gray-300"
                   }`}
                   placeholder="Enter your full name"
                 />
               </div>
               {errors.name && (
-                <p className="mt-1 text-sm text-red-600">{errors.name.message}</p>
+                <p className="mt-1 text-sm text-red-600">
+                  {errors.name.message}
+                </p>
               )}
             </div>
 
@@ -89,21 +110,23 @@ function Signup() {
                 </div>
                 <input
                   type="email"
-                  {...register('email', {
-                    required: 'Email is required',
+                  {...register("email", {
+                    required: "Email is required",
                     pattern: {
                       value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                      message: 'Invalid email address'
-                    }
+                      message: "Invalid email address",
+                    },
                   })}
-                  className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors ${
-                    errors.email ? 'border-red-300' : 'border-gray-300'
+                  className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                    errors.email ? "border-red-300" : "border-gray-300"
                   }`}
                   placeholder="Enter your email"
                 />
               </div>
               {errors.email && (
-                <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>
+                <p className="mt-1 text-sm text-red-600">
+                  {errors.email.message}
+                </p>
               )}
             </div>
 
@@ -117,9 +140,9 @@ function Signup() {
                   <Shield className="h-5 w-5 text-gray-400" />
                 </div>
                 <select
-                  {...register('role', { required: 'Role is required' })}
-                  className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors ${
-                    errors.role ? 'border-red-300' : 'border-gray-300'
+                  {...register("role", { required: "Role is required" })}
+                  className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                    errors.role ? "border-red-300" : "border-gray-300"
                   }`}
                 >
                   <option value="">Select your role</option>
@@ -128,7 +151,9 @@ function Signup() {
                 </select>
               </div>
               {errors.role && (
-                <p className="mt-1 text-sm text-red-600">{errors.role.message}</p>
+                <p className="mt-1 text-sm text-red-600">
+                  {errors.role.message}
+                </p>
               )}
             </div>
 
@@ -142,16 +167,16 @@ function Signup() {
                   <Lock className="h-5 w-5 text-gray-400" />
                 </div>
                 <input
-                  type={showPassword ? 'text' : 'password'}
-                  {...register('password', {
-                    required: 'Password is required',
+                  type={showPassword ? "text" : "password"}
+                  {...register("password", {
+                    required: "Password is required",
                     minLength: {
                       value: 6,
-                      message: 'Password must be at least 6 characters'
-                    }
+                      message: "Password must be at least 6 characters",
+                    },
                   })}
-                  className={`w-full pl-10 pr-12 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors ${
-                    errors.password ? 'border-red-300' : 'border-gray-300'
+                  className={`w-full pl-10 pr-12 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                    errors.password ? "border-red-300" : "border-gray-300"
                   }`}
                   placeholder="Enter your password"
                 />
@@ -168,7 +193,9 @@ function Signup() {
                 </button>
               </div>
               {errors.password && (
-                <p className="mt-1 text-sm text-red-600">{errors.password.message}</p>
+                <p className="mt-1 text-sm text-red-600">
+                  {errors.password.message}
+                </p>
               )}
             </div>
 
@@ -182,13 +209,16 @@ function Signup() {
                   <Lock className="h-5 w-5 text-gray-400" />
                 </div>
                 <input
-                  type={showConfirmPassword ? 'text' : 'password'}
-                  {...register('confirmPassword', {
-                    required: 'Please confirm your password',
-                    validate: value => value === password || 'Passwords do not match'
+                  type={showConfirmPassword ? "text" : "password"}
+                  {...register("confirmPassword", {
+                    required: "Please confirm your password",
+                    validate: (value) =>
+                      value === password || "Passwords do not match",
                   })}
-                  className={`w-full pl-10 pr-12 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors ${
-                    errors.confirmPassword ? 'border-red-300' : 'border-gray-300'
+                  className={`w-full pl-10 pr-12 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                    errors.confirmPassword
+                      ? "border-red-300"
+                      : "border-gray-300"
                   }`}
                   placeholder="Confirm your password"
                 />
@@ -205,7 +235,9 @@ function Signup() {
                 </button>
               </div>
               {errors.confirmPassword && (
-                <p className="mt-1 text-sm text-red-600">{errors.confirmPassword.message}</p>
+                <p className="mt-1 text-sm text-red-600">
+                  {errors.confirmPassword.message}
+                </p>
               )}
             </div>
 
@@ -215,7 +247,7 @@ function Signup() {
               whileTap={{ scale: 0.98 }}
               type="submit"
               disabled={loading}
-              className="w-full py-3 px-4 bg-gradient-to-r from-blue-500 to-emerald-500 text-white font-medium rounded-lg hover:from-blue-600 hover:to-emerald-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full py-3 px-4 bg-gradient-to-r from-blue-500 to-emerald-500 text-white font-semibold rounded-lg hover:from-blue-600 hover:to-emerald-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? (
                 <div className="flex items-center justify-center">
@@ -223,7 +255,7 @@ function Signup() {
                   Creating Account...
                 </div>
               ) : (
-                'Create Account'
+                "Create Account"
               )}
             </motion.button>
           </form>
@@ -231,7 +263,7 @@ function Signup() {
           {/* Footer */}
           <div className="mt-8 text-center">
             <p className="text-sm text-gray-600">
-              Already have an account?{' '}
+              Already have an account?{" "}
               <Link
                 to="/login"
                 className="font-medium text-blue-600 hover:text-blue-500 transition-colors"
